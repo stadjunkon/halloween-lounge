@@ -1,0 +1,32 @@
+# dependencies and environments
+node_modules/
+.venv/
+venv/
+bl/
+__pycache__/
+*.pyc
+
+# builds and generated output (index.html at the root is the deliverable and IS committed)
+dist/
+build/
+tools/out/
+
+# Blender working files
+*.blend
+*.blend1
+render/*.log
+
+# temporary and OS files
+tmp/
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+secrets.*

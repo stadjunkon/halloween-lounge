@@ -1,0 +1,328 @@
+<title>Halloween Lounge</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Grenze+Gotisch:wght@500;600&display=swap">
+<style>
+/* Layout: one phone screen in total darkness with a Blender-rendered jack-o'-lantern as the
+   only light. Glass controls, a candle for a progress bar, and an "up next" card sit below it;
+   the pumpkin's light reveals them and catches their edges. Wide screens add a legend. */
+:root{
+  --page:#000;
+  --bg:#050505; --bg-rgb:5,5,5;
+  --fg:#f5f3f1; --fg-rgb:245,243,241;
+  --fg-2:rgba(245,243,241,.56); --fg-3:rgba(245,243,241,.34);
+  --glass-1:rgba(255,255,255,.075); --glass-2:rgba(255,255,255,.02);
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.15);
+  --ember:#ff5a1f; --ember-rgb:255,90,31;
+  --flame-rgb:255,182,92;
+  --blood-rgb:150,28,6;
+  --moon:#8f98c2;
+  --wax-hi:#fbf1dc; --wax:#e6d2ab; --wax-lo:#b59c72;
+  --btn-hi:#ffffff; --btn-lo:#c9c6c2; --btn-ink:#0c0b0a;
+  --ink:#000;
+  --f:"Geist","Inter Tight","Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --f-mark:"Grenze Gotisch","UnifrakturMaguntia",Georgia,serif;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--fg);font:400 14px/1.4 var(--f);overflow:hidden;
+  background:var(--page);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+}
+body:not(.framed){background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
+button:focus-visible,[role="slider"]:focus-visible{outline:1.5px solid rgba(var(--ember-rgb),.9);outline-offset:3px}
+p,h1,h2,h3{margin:0}
+
+/* ---------- page ---------- */
+.shell{height:100%;display:flex;align-items:center;justify-content:center}
+body:not(.framed) .shell{display:block}
+.notes{display:none;width:290px;flex:none;gap:24px;align-content:center}
+body.wide .notes{display:grid}
+.notes .mark{font:600 40px/.95 var(--f-mark);color:var(--fg)}
+.notes .eyebrow{font:400 12px/1.3 var(--f);color:var(--fg-3);letter-spacing:.01em}
+.notes p{font:400 15px/1.55 var(--f);color:var(--fg-2);max-width:34ch;letter-spacing:-.01em}
+.keys{display:grid;margin:0;border-top:1px solid var(--line)}
+.keys div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.keys dt{font:400 13px/1.3 var(--f);color:var(--fg)}
+.keys dd{margin:0;font:400 13px/1.3 var(--f);color:var(--fg-3);text-align:right}
+.notes .small{font:400 12px/1.5 var(--f);color:var(--fg-3)}
+
+/* ---------- device ---------- */
+.device-box{position:relative;flex:none}
+.device{
+  position:relative;width:414px;height:868px;padding:12px;
+  border-radius:66px;background:linear-gradient(150deg,#262222,#0d0b0b 45%,#1a1616);
+  box-shadow:0 0 0 1px #302a28,inset 0 0 0 2px #050404,0 60px 140px rgba(0,0,0,.6);
+}
+.screen{position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg);isolation:isolate;user-select:none;-webkit-user-select:none}
+body:not(.framed) .device-box{width:100%;height:100%}
+body:not(.framed) .device{position:static;width:100%;height:100%;padding:0;border-radius:0;background:none;box-shadow:none;transform:none}
+body:not(.framed) .screen{width:100%;height:100%;border-radius:0}
+.statusbar{
+  position:absolute;z-index:9;top:0;left:0;right:0;height:54px;padding:10px 34px 0 50px;
+  display:flex;align-items:center;justify-content:space-between;pointer-events:none;
+  font:600 16px/1 var(--f-sys);color:var(--fg);letter-spacing:-.01em;
+}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.island{position:absolute;z-index:10;top:11px;left:50%;width:124px;height:36px;margin-left:-62px;border-radius:20px;background:var(--ink)}
+.homebar{position:absolute;z-index:9;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:var(--fg);pointer-events:none}
+body:not(.framed) .statusbar,body:not(.framed) .island,body:not(.framed) .homebar{display:none}
+
+/* ---------- light layers ---------- */
+.bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at var(--lx,50%) var(--ly,35%), rgba(var(--ember-rgb),calc(var(--L,0) * .16)), transparent 300px),
+    var(--bg);
+}
+.dark{position:absolute;inset:0;z-index:3;pointer-events:none;background:var(--bg)}
+.ember-floor{
+  position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(130% 42% at 50% 112%, rgba(var(--blood-rgb),.85), rgba(var(--blood-rgb),.25) 45%, transparent 75%);
+  opacity:calc(.45 + var(--warm,0) * .55);
+}
+#pk,#fx{position:absolute;z-index:5;pointer-events:none;mix-blend-mode:screen}
+#fx{inset:0;width:100%;height:100%}
+.pk-hit{position:absolute;z-index:6;border-radius:50%;cursor:pointer}
+.pk-hit:focus-visible{outline-offset:-10px}
+.hint{
+  position:absolute;z-index:6;left:0;right:0;text-align:center;pointer-events:none;
+  font:400 13px/1 var(--f);letter-spacing:-.01em;color:var(--moon);
+  opacity:0;transition:opacity .7s ease;
+}
+.hint.show{opacity:.9}
+.hint.pulse{animation:breathe 2.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.4}50%{opacity:.95}}
+.screen[data-state="lit"] .hint{color:rgba(var(--flame-rgb),.85)}
+
+/* ---------- interface ---------- */
+.ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:56px 20px 30px}
+body:not(.framed) .ui{padding:12px 16px 18px}
+.screen[data-state="dark"] .ui{pointer-events:none}
+[data-lit]{--rx:0;--ry:-1;--ra:0;--sx:0;--sy:0;--sa:0}
+.rim{box-shadow:inset calc(var(--rx) * 1px) calc(var(--ry) * 1px) 0 rgba(var(--flame-rgb),calc(var(--ra) * .75)),inset 0 1px 0 rgba(255,255,255,.07)}
+
+.top{position:relative;z-index:1;flex:none;height:40px;display:flex;align-items:center}
+.back{display:inline-flex;align-items:center;gap:3px;height:30px;padding:0 12px 0 8px;border-radius:15px;background:rgba(255,255,255,.09);font:400 13.5px/1 var(--f);letter-spacing:-.01em;color:var(--fg)}
+.back svg{width:14px;height:14px;opacity:.8}
+
+.stage{position:relative;flex:1 1 auto;min-height:220px}
+
+.dots{flex:none;display:flex;justify-content:center;align-items:center;gap:5px;height:12px}
+.dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.4)}
+.dots i:nth-child(1){transform:translateY(1px)}
+.dots i:nth-child(3){transform:translateY(-2px)}
+.screen[data-playing="true"] .dots i{animation:wave 1.2s ease-in-out infinite}
+.screen[data-playing="true"] .dots i:nth-child(2){animation-delay:.15s}
+.screen[data-playing="true"] .dots i:nth-child(3){animation-delay:.3s}
+@keyframes wave{0%,100%{transform:translateY(1px);opacity:.45}50%{transform:translateY(-3px);opacity:1}}
+
+.np{flex:none;display:grid;justify-items:center;gap:8px;margin-top:12px;text-align:center;transition:opacity .22s ease,transform .22s ease,filter .22s ease}
+.np.swap{opacity:0;transform:translateY(6px);filter:blur(4px)}
+.title{font:400 24px/1.15 var(--f);letter-spacing:-.035em;color:var(--fg);text-wrap:balance}
+.meta{font:400 13.5px/1.35 var(--f);letter-spacing:-.01em;color:rgba(255,255,255,.5)}
+
+/* the candle, lying in a dark field */
+.field{
+  flex:none;margin-top:18px;height:46px;border-radius:23px;padding:0 20px;display:flex;align-items:center;
+  background:linear-gradient(180deg,#1a1a1a,#121212);
+  touch-action:none;cursor:pointer;
+}
+.candle-track{position:relative;flex:1;height:26px}
+.groove{position:absolute;left:0;right:0;top:12px;height:2px;border-radius:1px;background:rgba(255,255,255,.06)}
+.trail{
+  position:absolute;left:0;top:12px;height:2px;width:0;border-radius:1px;
+  background:linear-gradient(to right, rgba(var(--fg-rgb),.08), rgba(var(--fg-rgb),.2) calc(100% - 30px), rgba(var(--ember-rgb),.95));
+}
+.drops{position:absolute;inset:0;pointer-events:none}
+.drops i{position:absolute;margin-left:-2px;border-radius:50%;background:var(--wax-lo);opacity:0;transform:scale(.2);transition:opacity .6s ease,transform .7s cubic-bezier(.2,1.7,.4,1)}
+.drops i.on{opacity:.55;transform:scale(1)}
+.wax{
+  position:absolute;right:0;left:0;top:9px;height:8px;border-radius:3px 4px 4px 3px;
+  background:linear-gradient(to bottom, var(--wax-hi), var(--wax) 55%, var(--wax-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 10px rgba(0,0,0,.6);
+}
+.wax::before{content:"";position:absolute;left:-3px;top:-1.5px;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 60% 35%, var(--wax-hi), var(--wax) 60%, var(--wax-lo))}
+.drip{position:absolute;left:2px;top:7px;width:5px;height:9px;border-radius:50% 50% 50% 50%/30% 30% 70% 70%;background:linear-gradient(var(--wax), var(--wax-lo));transform-origin:50% 0;animation:drip 3.4s ease-in infinite}
+@keyframes drip{0%{transform:scaleY(.2);opacity:1}55%{transform:scaleY(1)}75%{transform:translateY(2px) scaleY(1.1);opacity:1}92%{transform:translateY(15px) scaleY(.7);opacity:0}100%{transform:scaleY(.2);opacity:0}}
+.cflame{position:absolute;top:-11px;left:0;width:14px;height:22px;margin-left:-7px;transform-origin:50% 92%;pointer-events:none}
+.cflame::before{content:"";position:absolute;left:50%;top:62%;width:80px;height:80px;margin:-40px 0 0 -40px;border-radius:50%;background:radial-gradient(circle, rgba(var(--flame-rgb),.3), rgba(var(--ember-rgb),.08) 42%, transparent 70%)}
+.cflame svg{position:relative;display:block;width:100%;height:100%}
+.screen:not([data-playing="true"]) .cflame{opacity:.55}
+
+/* elapsed time as code tiles */
+.tiles{flex:none;display:flex;justify-content:center;align-items:center;gap:7px;margin-top:14px}
+.tiles span{
+  width:44px;height:54px;border-radius:10px;display:grid;place-items:center;
+  font:300 31px/1 var(--f);color:var(--fg);font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#1b1b1b,#111);border:1px solid rgba(255,255,255,.05);
+}
+.tiles b{width:10px;text-align:center;font:300 28px/1 var(--f);color:rgba(255,255,255,.3)}
+
+.chips{flex:none;display:flex;justify-content:center;gap:8px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px 0 9px;border-radius:14px;background:rgba(255,255,255,.08);font:400 12.5px/1 var(--f);letter-spacing:-.01em;color:rgba(255,255,255,.72);transition:background-color .2s ease,color .2s ease}
+.chip svg{width:13px;height:13px}
+.chip[aria-pressed="true"]{color:var(--fg);background:rgba(var(--ember-rgb),.2)}
+#like[aria-pressed="true"] svg path{fill:var(--ember);stroke:var(--ember)}
+#like.pop{animation:pop .45s cubic-bezier(.2,1.8,.4,1)}
+@keyframes pop{0%{transform:scale(.8)}100%{transform:scale(1)}}
+
+.btn{flex:none;display:flex;width:100%;height:48px;border-radius:24px;align-items:center;justify-content:center;gap:8px;font:400 15.5px/1 var(--f);letter-spacing:-.02em;transition:transform .15s ease}
+.btn:active{transform:scale(.985)}
+.btn svg{width:16px;height:16px}
+.btn-primary{
+  margin-top:18px;color:var(--btn-ink);font-weight:500;
+  background:radial-gradient(120% 170% at 50% 0%, #ffffff 0%, #ededed 42%, #b9b7b4 100%);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.14),0 10px 34px rgba(var(--ember-rgb),calc(var(--warm,0) * .3));
+}
+.btn-dark{
+  margin-top:10px;color:var(--fg);
+  background:linear-gradient(180deg,#1c1c1c,#0c0c0c);border:1px solid rgba(255,255,255,.1);
+}
+.btn-dark .lbl{color:rgba(255,255,255,.45)}
+.btn-dark .dur{color:rgba(255,255,255,.4);font-variant-numeric:tabular-nums}
+.btn-dark .nx{max-width:58%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.fine{flex:none;margin:14px auto 0;max-width:31ch;text-align:center;font:400 11.5px/1.5 var(--f);color:rgba(255,255,255,.36)}
+.fine b{font-weight:500;color:rgba(255,255,255,.62)}
+body.compact .fine,body.compact .chips{display:none}
+
+/* recording helpers */
+.keys-hint{position:fixed;z-index:20;left:max(20px,env(safe-area-inset-left,0px));bottom:20px;display:grid;gap:8px;font:400 12px/1.2 var(--f);color:rgba(255,255,255,.42);pointer-events:none}
+.keys-hint div{display:flex;align-items:center;gap:6px}
+.keys-hint kbd{min-width:22px;height:20px;padding:0 6px;display:inline-grid;place-items:center;border-radius:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font:500 11px/1 var(--f);color:rgba(255,255,255,.78)}
+.keys-hint kbd + span{margin-left:2px}
+body:not(.framed) .keys-hint,html.fs .keys-hint{display:none}
+.toast{position:fixed;z-index:30;left:50%;bottom:28px;transform:translate(-50%,8px);padding:9px 14px;border-radius:18px;background:rgba(28,28,28,.92);border:1px solid rgba(255,255,255,.1);font:500 13px/1 var(--f);color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+html.fs.idle,html.fs.idle *{cursor:none!important}
+
+@media (prefers-reduced-motion: reduce){
+  .hint.pulse{animation:none}
+  .drip{animation:none;opacity:0}
+  .np{transition:none}
+}
+</style>
+
+<div class="shell">
+
+  <div class="device-box" id="deviceBox">
+    <div class="device" id="device">
+      <div class="screen" id="screen" data-state="dark" data-playing="false">
+        <div class="bg"></div>
+
+        <div class="ui" id="ui">
+          <div class="top">
+            <button class="back rim" type="button" data-lit>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>Back
+            </button>
+          </div>
+
+          <div class="stage" id="stage"></div>
+
+          <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <section class="np" id="np" aria-label="Now playing">
+            <h2 class="title" id="title">Hollow Grin</h2>
+            <p class="meta" id="meta">The Gourd Quartet · D minor · 92 bpm</p>
+          </section>
+
+          <div class="field rim" id="candle" data-lit role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="104" aria-valuenow="0" aria-valuetext="0:00 of 1:44">
+            <div class="candle-track" id="track">
+              <div class="groove"></div>
+              <div class="trail" id="trail"></div>
+              <div class="drops" id="drops"></div>
+              <div class="wax" id="wax"><i class="drip"></i></div>
+              <div class="cflame" id="cflame">
+                <svg viewBox="0 0 14 22" aria-hidden="true">
+                  <defs><linearGradient id="gCf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff6dc"/><stop offset=".45" stop-color="#ffc247"/><stop offset="1" stop-color="#e8540c" stop-opacity=".2"/></linearGradient></defs>
+                  <path d="M7 22C2.6 22 1 18.6 1.6 15.6 2.4 11.8 6 9.4 7 0c1 9.4 4.6 11.8 5.4 15.6C13 18.6 11.4 22 7 22z" fill="url(#gCf)"/>
+                  <ellipse cx="7" cy="17" rx="2.4" ry="3.6" fill="#fffaf0" opacity=".9"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="tiles" id="tiles" aria-hidden="true"><span>0</span><span>0</span><b>:</b><span>0</span><span>0</span></div>
+
+          <div class="chips">
+            <button class="chip" id="prev" type="button">
+              <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M12.5 3.6v8.8L6 8z"/><rect x="3.5" y="3.6" width="1.6" height="8.8" rx=".8"/></svg>Previous
+            </button>
+            <button class="chip" id="loop" type="button" aria-pressed="false">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v2.8h-2.8"/></svg>Repeat
+            </button>
+            <button class="chip" id="like" type="button" aria-pressed="false">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M8 13.6s-5-3-5-6.8a2.8 2.8 0 0 1 5-1.7 2.8 2.8 0 0 1 5 1.7c0 3.8-5 6.8-5 6.8z"/></svg>Like
+            </button>
+          </div>
+
+          <button class="btn btn-primary" id="play" type="button">
+            <svg id="icFlame" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.2c.7 2.3 3.6 4 3.6 7.3A3.6 3.6 0 0 1 4.4 8.5c0-1.7.9-2.7 1.8-3.6.1 1.2.7 1.9 1.4 2.1.1-2.1-.3-4 .4-5.8z"/></svg>
+            <svg id="icPlay" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" hidden><path d="M5 3.2v9.6L12.8 8z"/></svg>
+            <svg id="icPause" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" hidden><rect x="4.2" y="3.2" width="2.6" height="9.6" rx="1"/><rect x="9.2" y="3.2" width="2.6" height="9.6" rx="1"/></svg>
+            <span id="playLabel">Light the candle</span>
+          </button>
+          <button class="btn btn-dark rim" id="next" type="button" data-lit>
+            <span class="lbl">Next</span><span class="nx" id="nextTitle">Fog over the Field</span><span class="dur" id="nextDur">1:28</span>
+          </button>
+
+        </div>
+
+        <div class="dark" id="dark"></div>
+        <div class="ember-floor"></div>
+        <canvas id="pk" aria-hidden="true"></canvas>
+        <canvas id="fx" aria-hidden="true"></canvas>
+        <button class="pk-hit" id="pkHit" type="button" aria-pressed="false" aria-label="Light the pumpkin"></button>
+        <p class="hint show pulse" id="hint" role="status">Tap the pumpkin to light it</p>
+
+        <div class="statusbar" aria-hidden="true">
+          <span id="clock">9:41</span>
+          <span class="icons">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.6c2.3 0 4.4.9 6 2.4l1.2-1.3A10.4 10.4 0 0 0 8 .8C5.2.8 2.7 1.9.8 3.7L2 5c1.6-1.5 3.7-2.4 6-2.4zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.7 6.7 0 0 0 8 4.4c-1.8 0-3.4.7-4.6 1.8l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3zM8 8l-2 2.1L8 12l2-1.9z"/></svg>
+            <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="currentColor" opacity=".45"/></svg>
+          </span>
+        </div>
+        <div class="island" aria-hidden="true"></div>
+        <div class="homebar" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="keys-hint" id="keysHint" aria-hidden="true">
+  <div><kbd>F</kbd><span>полный экран</span></div>
+  <div><kbd>Space</kbd><kbd>Enter</kbd><span>запуск</span></div>
+  <div><kbd>R</kbd><span>повтор</span></div>
+  <div><kbd>−</kbd><kbd>+</kbd><span>масштаб</span><kbd>0</kbd><span>сброс</span></div>
+  <div><kbd>H</kbd><span>скрыть подсказку</span></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const easeIn = t => Math.pow(clamp(t, 0, 1), 3);
+const bump = (t, c, w) => Math.exp(-(((t - c) / w) ** 2));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hash = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return (s - Math.floor(s)) * 2 - 1; };
+function nz(x) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash(i) * f, hash(i + 1) * (f - 1), u) * 2; }
+function fbm(x) { return nz(x) * .6 + nz(x * 2.13 + 7.1) * .28 + nz(x * 4.37 + 3.3) * .12; }
+function rng(seed) { return () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const fmt = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+/* ================= the record ================= */
